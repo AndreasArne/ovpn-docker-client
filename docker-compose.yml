@@ -1,0 +1,44 @@
+version: '3.5'
+
+networks:
+  openvpn:
+    name: vpn
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+
+services:
+  vpn:
+    image: dperson/openvpn-client
+    container_name: vpn_client
+    cap_add:
+      - net_admin
+    environment:
+      TZ: 'Europe/Sctockholm'
+    networks:
+      openvpn:
+        ipv4_address: 172.21.0.10
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    # if using '-d' or 'DNS' you can't enable the `read_only: true` option
+    # read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    restart: unless-stopped
+    security_opt:
+      - label:disable
+    stdin_open: true
+    tty: true
+    volumes:
+      - /dev/net:/dev/net:z
+      - <path-to-where-store-ovpn-config>:/vpn
+    # Put .ovpn configuration file in the /vpn directory (in "volumes:" above or
+    # launch using the command line arguments, IE pick one:
+    #  - ./vpn:/vpn
+    command: '-d'
+    # Add ports here which you want to be exposed in vpn network
+    # ports:
+      # - "80:80"
